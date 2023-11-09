@@ -1,0 +1,28 @@
+{
+  "name": "wasm-benchmarks",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/run.bench.ts",
+  "type": "module",
+  "scripts": {
+    "bench": "vitest bench",
+    "build": "npm run build:fib",
+    "build:fib": "mkdir -p dist/fib && npm run build:fib:js && npm run build:fib:go",
+    "build:fib:js": "javy compile ./benchmarks/js/fib.js -o ./dist/fib/js.wasm",
+    "build:fib:go": "GOOS=wasip1 GOARCH=wasm go build -C ./benchmarks/go/fib -o ../../../dist/fib/go.wasm",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "wasm",
+    "benchmarks"
+  ],
+  "author": "Zachary Cowan",
+  "license": "MIT",
+  "devDependencies": {
+    "execa": "^8.0.1",
+    "javy-cli": "^0.2.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2",
+    "vitest": "^0.34.6"
+  }
+}
