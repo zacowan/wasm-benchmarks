@@ -1,6 +1,6 @@
 package main
 
-const number = 42
+const number = 30
 
 func fib(n int) int {
 	if (n <= 1) {

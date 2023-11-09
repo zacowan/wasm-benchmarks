@@ -1,4 +1,4 @@
-const NUMBER = 42;
+const NUMBER = 30;
 
 const fib = (n) => {
   if (n <= 1) {

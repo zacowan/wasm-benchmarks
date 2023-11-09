@@ -6,11 +6,11 @@
   "type": "module",
   "scripts": {
     "bench": "vitest bench",
-    "build": "npm run build:fib",
+    "build": "npm run clean && npm run build:fib",
     "build:fib": "mkdir -p dist/fib && npm run build:fib:js && npm run build:fib:go",
     "build:fib:js": "javy compile ./benchmarks/js/fib.js -o ./dist/fib/js.wasm",
     "build:fib:go": "GOOS=wasip1 GOARCH=wasm go build -C ./benchmarks/go/fib -o ../../../dist/fib/go.wasm",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "wasm",
