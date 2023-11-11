@@ -1,82 +1,63 @@
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useMemo } from "react";
+import percentile from "percentile";
 
 interface BenchCardProps {
   title: string;
-  description: string;
-  onRun?: () => number[];
+  sourceCode: string;
+  results?: number[];
 }
 
-const ERROR_TIMEOUT_MS = 2000; // 2s
-
-export const BenchCard = ({ title, description, onRun }: BenchCardProps) => {
-  const [results, setResults] = useState<number[]>([]); // in ms
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  const handleRun = async () => {
-    if (!onRun) {
-      setError(new Error("Failed to run benchmark"));
-      setTimeout(() => {
-        setError(null);
-      }, ERROR_TIMEOUT_MS);
-      return;
+export const BenchCard = ({ title, sourceCode, results }: BenchCardProps) => {
+  const resultsData = useMemo(() => {
+    if (results === undefined) {
+      return undefined;
     }
-    setIsLoading(true);
-    setTimeout(async () => {
-      try {
-        const res = onRun();
-        setResults(res);
-      } catch (error) {
-        setError(error as Error);
-      } finally {
-        setIsLoading(false);
-      }
-    }, 250);
-  };
-
-  const getContent = () => {
-    if (error) {
-      return <p>Error: {error.message}</p>;
-    }
-
-    if (results.length === 0) {
-      return <p>No benchmark data.</p>;
-    }
-
-    return (
-      <Badge variant="secondary">
-        Avg:{" "}
-        {isLoading
-          ? "..."
-          : results.reduce<number>((acc, curr) => acc + curr, 0) /
-            results.length}{" "}
-        ms
-      </Badge>
-    );
-  };
+    return [
+      {
+        label: "mean",
+        data:
+          results.reduce<number>((acc, curr) => acc + curr, 0) / results.length,
+      },
+      { label: "min", data: Math.min(...results) },
+      { label: "max", data: Math.max(...results) },
+      { label: "p75", data: percentile(75, results) as number },
+      { label: "p95", data: percentile(95, results) as number },
+      { label: "p99", data: percentile(99, results) as number },
+    ];
+  }, [results]);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent>{getContent()}</CardContent>
-      <CardFooter>
-        <Button disabled={isLoading || !onRun} onClick={handleRun}>
-          {isLoading || !onRun ? "Waiting..." : "Run Benchmark"}
-        </Button>
-      </CardFooter>
+      <CardContent>
+        {!resultsData ? (
+          <p>No benchmark data.</p>
+        ) : (
+          <span className="flex flex-wrap gap-2">
+            {resultsData.map(({ label, data }) => (
+              <Badge key={label} variant="secondary">
+                {label}:{" "}
+                {Intl.NumberFormat("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }).format(data)}{" "}
+                ms
+              </Badge>
+            ))}
+          </span>
+        )}
+      </CardContent>
+      <CardFooter>{sourceCode}</CardFooter>
     </Card>
   );
 };

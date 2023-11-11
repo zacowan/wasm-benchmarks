@@ -1,38 +1,76 @@
-import { useQuery } from "react-query";
-import { fetchWasm } from "./lib/utils";
-import { BenchCard } from "@/components/bench-card";
-
-const FIB_30_RESULT = 832040;
-
-const runFib = (f: () => number) => {
-  const resultsMs = [];
-  for (let i = 0; i < 1000; i++) {
-    const startTime = Date.now();
-    const res = f();
-    const endTime = Date.now();
-    if (res !== FIB_30_RESULT) {
-      throw new Error(
-        `Incorrect result. Expected ${FIB_30_RESULT}, received ${res}.`
-      );
-    }
-    resultsMs.push(endTime - startTime);
-  }
-  return resultsMs;
-};
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  OutgoingMessage,
+  RunResults as BenchResults,
+  IncomingInitMessage,
+  IncomingRunMessage,
+} from "./lib/fib-worker/utils";
+import { BenchCard } from "./components/bench-card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 const App = () => {
-  const { data: fibJsModule } = useQuery(
-    "fib.js",
-    async () => await fetchWasm("fib.js")
+  const [isWorkerReady, setIsWorkerReady] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [benchResults, setBenchResults] = useState<BenchResults | undefined>();
+  const [error, setError] = useState<Error | null>(null);
+  const [fibNumber, setFibNumber] = useState(25);
+
+  const fibWorker: Worker = useMemo(
+    () =>
+      new Worker(new URL("@/lib/fib-worker/fib-worker.ts", import.meta.url), {
+        type: "module",
+      }),
+    []
   );
-  const { data: fibCModule } = useQuery(
-    "fib.c",
-    async () => await fetchWasm("fib.c.wasm")
+
+  const handleWorkerMessage = useCallback(
+    (event: MessageEvent<OutgoingMessage>) => {
+      if (event.data.type === "init") {
+        if (event.data.error === null) {
+          setIsWorkerReady(true);
+        } else {
+          console.error("Error loading worker", event.data.error);
+        }
+      } else {
+        // type === 'run'
+        setIsRunning(false);
+        if (event.data.error === null) {
+          setBenchResults(event.data.results);
+        } else {
+          setError(event.data.error);
+        }
+      }
+    },
+    []
   );
-  const { data: fibRsModule } = useQuery(
-    "fib.rs",
-    async () => await fetchWasm("fib.rs.wasm")
-  );
+
+  useEffect(() => {
+    if (window.Worker) {
+      fibWorker.onmessage = handleWorkerMessage;
+      const initMsg: IncomingInitMessage = {
+        type: "init",
+      };
+      fibWorker.postMessage(initMsg);
+    }
+  }, [fibWorker, handleWorkerMessage]);
+
+  const runBenchmark = () => {
+    setIsRunning(true);
+    const runMsg: IncomingRunMessage = {
+      type: "run",
+      fibNumber,
+    };
+    fibWorker.postMessage(runMsg);
+  };
 
   return (
     <div className="bg-background text-foreground">
@@ -43,24 +81,52 @@ const App = () => {
           </li>
         </ul>
       </nav>
-      <main className="py-8 container">
+      <main className="py-8 container space-y-8">
+        <h1 className="text-4xl font-medium">Benchmarks</h1>
         <section className="space-y-8">
-          <h1 className="text-4xl font-medium">Benchmarks</h1>
+          <h2 className="text-2xl">Fib Benchmark</h2>
+          <div>
+            <Label className="block mb-2" htmlFor="fib-num">
+              Fibonacci Number to Calculate
+            </Label>
+            <Select
+              value={fibNumber.toString()}
+              onValueChange={(val) => setFibNumber(parseInt(val, 10))}
+            >
+              <SelectTrigger id="fib-num" className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="30">30</SelectItem>
+                <SelectItem value="35">35</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button disabled={!isWorkerReady || isRunning} onClick={runBenchmark}>
+            {isWorkerReady
+              ? isRunning
+                ? "Running benchmark..."
+                : "Run Benchmark"
+              : "Waiting for worker..."}
+          </Button>
+          {error && (
+            <Alert variant="destructive">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error.message}</AlertDescription>
+            </Alert>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <BenchCard
               title="fib.js"
-              description="fib(30), executed 1,000 times."
-              onRun={fibJsModule ? () => runFib(fibJsModule?.run) : undefined}
+              sourceCode=""
+              results={benchResults?.js}
             />
-            <BenchCard
-              title="fib.c"
-              description="fib(30), executed 1,000 times."
-              onRun={fibCModule ? () => runFib(fibCModule?.run) : undefined}
-            />
+            <BenchCard title="fib.c" sourceCode="" results={benchResults?.c} />
             <BenchCard
               title="fib.rs"
-              description="fib(30), executed 1,000 times."
-              onRun={fibRsModule ? () => runFib(fibRsModule?.run) : undefined}
+              sourceCode=""
+              results={benchResults?.rs}
             />
           </div>
         </section>
