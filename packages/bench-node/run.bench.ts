@@ -11,9 +11,6 @@ type Lang = "go" | "js";
 const execWasm = (test: Test, lang: Lang) =>
   execa(WASMTIME, [path.resolve("dist", test, `${lang}.wasm`)]);
 
-const execJs = (test: Test) =>
-  execa(NODE, [path.resolve("benchmarks", "js", `${test}.js`)]);
-
 describe("fib(30)", () => {
   bench("js.wasm", async () => {
     await execWasm("fib", "js");

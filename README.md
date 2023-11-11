@@ -1,18 +1,15 @@
 # WASM Benchmarks
 
-> A collection of benchmarks for different programming languages that are compiled to WebAssembly.
+> A collection of benchmarks for executing WebAssembly in different environments.
 
-## Usage
+For this "experiment", I had two core questions I wanted to explore:
 
-### Prerequisites
+1. What are the performance benefits of using WebAssembly over JavaScript?
+2. What are the performance implications of using different languages that compile to WebAssembly?
 
-1. Install wasmtime: https://github.com/bytecodealliance/wasmtime
-2. Install go: https://go.dev
-3. Install Node.js: https://nodejs.org/en
-4. Install pnpm: https://pnpm.io
+## Available Benchmarks
 
-### Running Benchmarks
+The results of each benchmark are highlighted in the README.
 
-1. Install the required dependencies using pnpm: `pnpm i`
-2. Build the wasm modules: `pnpm build`
-3. Run the benchmarks: `pnpm bench`
+- [Web Assembly Executed in Node.js](./packages/bench-node)
+- [Web Assembly Executed in the Browser](./packages/bench-web)
