@@ -13,26 +13,56 @@ import { useState } from "react";
 interface BenchCardProps {
   title: string;
   description: string;
-  onRun: () => Promise<number[]>;
-  isLoading?: boolean;
+  onRun?: () => number[];
 }
 
-export const BenchCard = ({
-  title,
-  description,
-  onRun,
-  isLoading: isLoadingProp = false,
-}: BenchCardProps) => {
+const ERROR_TIMEOUT_MS = 2000; // 2s
+
+export const BenchCard = ({ title, description, onRun }: BenchCardProps) => {
   const [results, setResults] = useState<number[]>([]); // in ms
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const handleRun = async () => {
+    if (!onRun) {
+      setError(new Error("Failed to run benchmark"));
+      setTimeout(() => {
+        setError(null);
+      }, ERROR_TIMEOUT_MS);
+      return;
+    }
     setIsLoading(true);
     setTimeout(async () => {
-      const res = await onRun();
-      setResults(res);
-      setIsLoading(false);
+      try {
+        const res = onRun();
+        setResults(res);
+      } catch (error) {
+        setError(error as Error);
+      } finally {
+        setIsLoading(false);
+      }
     }, 250);
+  };
+
+  const getContent = () => {
+    if (error) {
+      return <p>Error: {error.message}</p>;
+    }
+
+    if (results.length === 0) {
+      return <p>No benchmark data.</p>;
+    }
+
+    return (
+      <Badge variant="secondary">
+        Avg:{" "}
+        {isLoading
+          ? "..."
+          : results.reduce<number>((acc, curr) => acc + curr, 0) /
+            results.length}{" "}
+        ms
+      </Badge>
+    );
   };
 
   return (
@@ -41,23 +71,10 @@ export const BenchCard = ({
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent>
-        {results.length === 0 ? (
-          <p>No benchmark data.</p>
-        ) : (
-          <Badge variant="secondary">
-            Avg:{" "}
-            {isLoading
-              ? "..."
-              : results.reduce<number>((acc, curr) => acc + curr, 0) /
-                results.length}{" "}
-            ms
-          </Badge>
-        )}
-      </CardContent>
+      <CardContent>{getContent()}</CardContent>
       <CardFooter>
-        <Button disabled={isLoading || isLoadingProp} onClick={handleRun}>
-          {isLoading || isLoadingProp ? "Waiting..." : "Run Benchmark"}
+        <Button disabled={isLoading || !onRun} onClick={handleRun}>
+          {isLoading || !onRun ? "Waiting..." : "Run Benchmark"}
         </Button>
       </CardFooter>
     </Card>

@@ -1,27 +1,37 @@
-import { fib } from "@/benches/js/fib";
 import { useQuery } from "react-query";
 import { fetchWasm } from "./lib/utils";
 import { BenchCard } from "@/components/bench-card";
 
-const runFib = async (f: () => unknown) => {
+const FIB_30_RESULT = 832040;
+
+const runFib = (f: () => number) => {
   const resultsMs = [];
   for (let i = 0; i < 1000; i++) {
     const startTime = Date.now();
-    await f();
+    const res = f();
     const endTime = Date.now();
+    if (res !== FIB_30_RESULT) {
+      throw new Error(
+        `Incorrect result. Expected ${FIB_30_RESULT}, received ${res}.`
+      );
+    }
     resultsMs.push(endTime - startTime);
   }
   return resultsMs;
 };
 
 const App = () => {
+  const { data: fibJsModule } = useQuery(
+    "fib.js",
+    async () => await fetchWasm("fib.js")
+  );
   const { data: fibCModule } = useQuery(
     "fib.c",
     async () => await fetchWasm("fib.c.wasm")
   );
-  const { data: fibGoModule } = useQuery(
-    "fib.go",
-    async () => await fetchWasm("fib.go.wasm")
+  const { data: fibRsModule } = useQuery(
+    "fib.rs",
+    async () => await fetchWasm("fib.rs.wasm")
   );
 
   return (
@@ -40,21 +50,17 @@ const App = () => {
             <BenchCard
               title="fib.js"
               description="fib(30), executed 1,000 times."
-              onRun={async () => runFib(fib)}
+              onRun={fibJsModule ? () => runFib(fibJsModule?.run) : undefined}
             />
             <BenchCard
               title="fib.c"
               description="fib(30), executed 1,000 times."
-              // @ts-expect-error -- yeah
-              onRun={async () => runFib(fibCModule?.run)}
-              isLoading={fibCModule === undefined}
+              onRun={fibCModule ? () => runFib(fibCModule?.run) : undefined}
             />
             <BenchCard
-              title="fib.go"
+              title="fib.rs"
               description="fib(30), executed 1,000 times."
-              // @ts-expect-error -- yeah
-              onRun={async () => runFib(fibGoModule?.run)}
-              isLoading={fibGoModule === undefined}
+              onRun={fibRsModule ? () => runFib(fibRsModule?.run) : undefined}
             />
           </div>
         </section>

@@ -1,35 +1,31 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import initFibRs, { fib as fibRs } from "@/benches/rs/fib/pkg";
+import { fib as fibJs } from "@/benches/js/fib";
+import initFibC from "@/benches/c/pkg";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export const fetchWasm = async (
-  name: "fib.c.wasm" | "fib.go.wasm"
+  name: "fib.js" | "fib.c.wasm" | "fib.rs.wasm"
 ): Promise<{
-  run: () => unknown;
+  run: () => number;
 }> => {
-  const res = await fetch(`/wasm/${name}`);
-  const bytes = await res.arrayBuffer();
-  if (name === "fib.go.wasm") {
-    // @ts-expect-error -- provided by public/go_wasm_exec.js script
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const go = new Go() as any;
-    const results = await WebAssembly.instantiate(bytes, go.importObject);
+  if (name === "fib.js") {
     return {
-      run: () => go.run(results.instance),
+      run: () => fibJs(30),
     };
-  } else {
-    // fib.c.wasm
-    const importObject = {
-      env: {},
-      wasi_snapshot_preview1: {},
-    };
-    const results = await WebAssembly.instantiate(bytes, importObject);
+  } else if (name === "fib.rs.wasm") {
+    await initFibRs();
     return {
-      // @ts-expect-error -- not typed
-      run: () => results.instance.exports.main(),
+      run: () => fibRs(30),
     };
   }
+  // fib.c.wasm
+  const fibCModule = await initFibC();
+  return {
+    run: () => fibCModule._fib(30),
+  };
 };
