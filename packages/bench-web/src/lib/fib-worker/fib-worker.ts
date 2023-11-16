@@ -1,6 +1,6 @@
 import initFibRs, { fib as fibRs } from "../../benches/rs/fib/pkg";
 import { fib as fibJs } from "../../benches/js/fib";
-import initFibC from "../../benches/c/pkg";
+import initFibC from "../../benches/c/fib/pkg";
 import {
   OutgoingInitMessage,
   OutgoingRunMessage,

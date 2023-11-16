@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run build:benches && tsc && vite build",
-    "build:benches": "mkdir -p public/wasm && npm run build:benches:c && npm run build:benches:rs",
-    "build:benches:c": "emcc src/benches/c/fib.c -o src/benches/c/pkg/fib.c.js -s EXPORTED_FUNCTIONS=_fib -s EXPORTED_RUNTIME_METHODS=ccall,cwrap -s ALLOW_MEMORY_GROWTH=1  -s EXPORT_ES6=1 -sMODULARIZE -s EXPORT_NAME=initModule",
+    "build:benches": "npm run build:benches:c && npm run build:benches:rs",
+    "build:benches:c": "emcc src/benches/c/fib/main.c -o src/benches/c/fib/pkg/fib.js -s EXPORTED_FUNCTIONS=_fib -s EXPORTED_RUNTIME_METHODS=ccall,cwrap -s ALLOW_MEMORY_GROWTH=1  -s EXPORT_ES6=1 -sMODULARIZE -s EXPORT_NAME=initModule",
     "build:benches:rs": "cd src/benches/rs/fib && wasm-pack build --target web",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"

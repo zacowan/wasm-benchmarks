@@ -1,0 +1,11 @@
+{
+  "name": "fib",
+  "version": "0.1.0",
+  "files": [
+    "fib.js",
+    "fib.wasm",
+    "fib.d.ts"
+  ],
+  "module": "fib.js",
+  "types": "fib.d.ts"
+}
