@@ -8,6 +8,7 @@
     "build": "npm run build:benches && tsc && vite build",
     "build:benches": "npm run build:benches:c && npm run build:benches:rs",
     "build:benches:c": "emcc src/benches/c/fib/main.c -o src/benches/c/fib/pkg/fib.js -s EXPORTED_FUNCTIONS=_fib -s EXPORTED_RUNTIME_METHODS=ccall,cwrap -s ALLOW_MEMORY_GROWTH=1  -s EXPORT_ES6=1 -sMODULARIZE -s EXPORT_NAME=initModule",
+    "prebuild:benches:rs": "cd src/benches/rs/fib && cargo build --verbose",
     "build:benches:rs": "cd src/benches/rs/fib && wasm-pack build --target web",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
