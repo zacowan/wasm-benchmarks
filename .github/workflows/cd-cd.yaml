@@ -18,6 +18,8 @@ jobs:
       - uses: actions/setup-node@v4
       - uses: mymindstorm/setup-emsdk@v12
       - uses: pnpm/action-setup@v2
+        with:
+          version: 8
       - name: Install
         run: pnpm i
       - name: Build

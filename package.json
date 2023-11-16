@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "build": "pnpm --filter bench-web build"
+  },
   "keywords": [
     "wasm",
     "benchmarks"
