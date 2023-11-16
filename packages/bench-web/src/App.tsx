@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import FibWorker from "@/lib/fib-worker/fib-worker?worker";
 
 const App = () => {
   const [isWorkerReady, setIsWorkerReady] = useState(false);
@@ -24,13 +25,7 @@ const App = () => {
   const [error, setError] = useState<Error | null>(null);
   const [fibNumber, setFibNumber] = useState(25);
 
-  const fibWorker: Worker = useMemo(
-    () =>
-      new Worker(new URL("@/lib/fib-worker/fib-worker.ts", import.meta.url), {
-        type: "module",
-      }),
-    []
-  );
+  const fibWorker: Worker = useMemo(() => new FibWorker(), []);
 
   const handleWorkerMessage = useCallback(
     (event: MessageEvent<OutgoingMessage>) => {

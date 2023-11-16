@@ -1,4 +1,4 @@
-import { default as initFibRs, fib as fibRs } from "../../benches/rs/fib/pkg";
+import initFibRs, { fib as fibRs } from "../../benches/rs/fib/pkg";
 import { fib as fibJs } from "../../benches/js/fib";
 import initFibC from "../../benches/c/pkg";
 import {
